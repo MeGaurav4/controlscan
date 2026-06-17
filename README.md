@@ -1,47 +1,39 @@
 # controlscan
+> Lightweight CLI for IT control drift detection
 
-A lightweight CLI that checks system-level security controls against a baseline and flags drift. Useful for keeping track of configuration changes over time.
-
-## What it does
-
-Runs a series of system checks (SSH key permissions, firewall status, kernel parameters, disk encryption, audit logging, file integrity, password policy, sudo config, world-writable files, unnecessary services), compares results against a saved baseline, and generates a JSON report. That is it — it is a small tool, not a production compliance suite.
-
-The point is catching drift between snapshots: if a control passed last week and fails today, you know something changed.
-
-## Usage
-
-```bash
-# Snapshot current state as baseline
-python3 controlscan.py baseline
-
-# Run checks and compare against baseline
-python3 controlscan.py check
-
-# View scan history
-python3 controlscan.py history
+```
+$ controlscan check --baseline baseline.yaml --host web-01.internal
+[PASS] sshd:PermitRootLogin = no
+[PASS] sshd:PasswordAuthentication = no
+[FAIL] sysctl:net.ipv4.ip_forward = 0  (current: 1)
+[PASS] firewall:default-deny = true
+Result: 3 PASS, 1 FAIL — drift detected
 ```
 
-## Controls checked
+## Overview
+A lightweight CLI that compares current system security control values against a baseline YAML and flags configuration drift. Designed for IT teams who need a fast, agentless way to audit Linux/Windows hosts against CIS benchmarks or internal baselines.
 
-| Control | Category | Severity |
-|---------|----------|----------|
-| SSH key file permissions | Access Control | High |
-| Host firewall active | Network Security | High |
-| Password policy strength | Access Control | Medium |
-| Critical file integrity | System Integrity | Medium |
-| Unnecessary services | System Hardening | Low |
-| Passwordless sudo users | Access Control | High |
-| Disk encryption | Data Protection | High |
-| Audit logging active | Monitoring | Medium |
-| World-writable system files | File Security | Medium |
-| Security kernel parameters | System Hardening | Medium |
+## Features
+- YAML-based baselines (human-readable, version-controllable)
+- Pluggable check modules (sshd, sysctl, firewall, packages, etc.)
+- Single-binary, no agent install
+- Exit codes for CI integration (0 = clean, 1 = drift, 2 = error)
 
-## Output
+## Tech Stack
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white) ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
-Results go to `~/.controlscan/` — one JSON report per scan, plus a history log and optional baseline. Each report includes pass/fail per control, drift flags (if a baseline exists), and severity for remediation triage.
+## Installation
+```bash
+git clone https://github.com/MeGaurav4/controlscan.git
+cd controlscan
+pip install -e .
+```
 
-## Caveats
+## Usage
+```bash
+controlscan check --baseline baseline.yaml --host web-01.internal
+controlscan check --baseline baseline.yaml --inventory hosts.txt --format json
+```
 
-- Runs without root by default, so some checks are best-effort (e.g., reading `/etc/shadow` is skipped on permission errors)
-- The check list is small and opinionated — add your own by editing `CONTROLS` and `CHECK_FUNCTIONS` in the script
-- This is a proof-of-concept, not a compliance framework
+## License
+MIT
